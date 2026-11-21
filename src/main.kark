@@ -1,6 +1,7 @@
 // Karkain CRM - first functional slice.
 // Customers, contacts and sales activities with persisted state.
 // Builtins only; all paths are relative to the repo root.
+import crm_lifecycle
 
 func find_customer(state, id) {
     let i = 0
@@ -145,4 +146,5 @@ func main() {
     persist(state_path, state)
     persist(report_path, split(report, "\n"))
     print("CRM_OK customers=" + str(count_kind(state, "CUSTOMER")) + " contacts=" + str(count_kind(state, "CONTACT")) + " activities=" + str(count_kind(state, "ACTIVITY")))
+    crm_lifecycle.crm2_run()
 }

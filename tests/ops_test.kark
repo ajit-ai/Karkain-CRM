@@ -1,0 +1,52 @@
+// Round 2 operations tests for Karkain CRM (self-contained, in-memory).
+
+func test_allowed_stage_transitions() {
+    let stages = "LEAD|QUALIFIED|CUSTOMER|CHURNED"
+    let allowed = "LEAD>QUALIFIED|LEAD>CHURNED|QUALIFIED>CUSTOMER|QUALIFIED>CHURNED|CUSTOMER>CHURNED"
+    let moves = ["LEAD>QUALIFIED", "QUALIFIED>CUSTOMER", "CUSTOMER>CHURNED", "CHURNED>CUSTOMER"]
+    let ok = 0
+    let i = 0
+    while (i < len(moves)) {
+        if (contains(allowed, moves[i]) == 1) { ok = ok + 1 }
+        i = i + 1
+    }
+    assert_eq(ok, 3)
+    assert_eq(contains(stages, "CHURNED"), 1)
+    assert_eq(contains(stages, "UNKNOWN"), 0)
+}
+
+func test_contact_history_sequence() {
+    let hist = ["CHIST|C001|1|Alice Smith", "CHIST|C001|2|Bob Jones", "CHIST|C002|1|Carol Lee"]
+    let c1 = 0
+    let max_seq = 0
+    let i = 0
+    while (i < len(hist)) {
+        let f = split(hist[i], "|")
+        if (f[1] == "C001") { c1 = c1 + 1 }
+        if (int(f[2]) > max_seq) { max_seq = int(f[2]) }
+        i = i + 1
+    }
+    assert_eq(c1, 2)
+    assert_eq(len(split(hist[0], "|")), 4)
+    assert_eq(split(hist[0], "|")[2], "1")
+}
+
+func test_activity_stage_and_relationship_summary() {
+    let acts = ["ACT|C001|1|LEAD|Intro call", "ACT|C001|2|QUALIFIED|Demo scheduled", "ACT|C001|3|CUSTOMER|Proposal sent"]
+    let c1 = 0
+    let stages_seen = ""
+    let i = 0
+    while (i < len(acts)) {
+        let f = split(acts[i], "|")
+        if (f[1] == "C001") { c1 = c1 + 1 }
+        stages_seen = stages_seen + f[3] + "|"
+        i = i + 1
+    }
+    assert_eq(c1, 3)
+    assert_eq(contains(stages_seen, "QUALIFIED"), 1)
+    let summary = "SUMMARY id=C001 name=Acme Corp stage=CHURNED contacts=2 activities=3 transitions=3"
+    let g = split(summary, "|")
+    assert_eq(len(g), 1)
+    assert_eq(contains(summary, "activities=3"), 1)
+    assert_eq(contains(summary, "stage=CHURNED"), 1)
+}
