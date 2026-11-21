@@ -1,0 +1,148 @@
+// Karkain CRM - first functional slice.
+// Customers, contacts and sales activities with persisted state.
+// Builtins only; all paths are relative to the repo root.
+
+func find_customer(state, id) {
+    let i = 0
+    while (i < len(state)) {
+        let f = split(state[i], "|")
+        if (f[0] == "CUSTOMER") {
+            if (f[1] == id) { return state[i] }
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+func upsert_customer(state, id, name) {
+    let rec = "CUSTOMER|" + id + "|" + name
+    let out = []
+    let i = 0
+    let replaced = 0
+    while (i < len(state)) {
+        let f = split(state[i], "|")
+        if (f[0] == "CUSTOMER") {
+            if (f[1] == id) { push(out, rec); replaced = 1 }
+            else { push(out, state[i]) }
+        } else { push(out, state[i]) }
+        i = i + 1
+    }
+    if (replaced == 0) { push(out, rec) }
+    return out
+}
+
+func count_kind(state, kind) {
+    let n = 0
+    let i = 0
+    while (i < len(state)) {
+        let f = split(state[i], "|")
+        if (f[0] == kind) { n = n + 1 }
+        i = i + 1
+    }
+    return n
+}
+
+func has_linked(state, kind, customer, value) {
+    let i = 0
+    while (i < len(state)) {
+        let f = split(state[i], "|")
+        if (f[0] == kind) {
+            if (f[1] == customer) {
+                if (f[2] == value) { return 1 }
+            }
+        }
+        i = i + 1
+    }
+    return 0
+}
+
+func add_linked(state, kind, customer, value) {
+    if (has_linked(state, kind, customer, value) == 1) { return state }
+    let rec = kind + "|" + customer + "|" + value
+    let out = []
+    let i = 0
+    while (i < len(state)) { push(out, state[i]); i = i + 1 }
+    push(out, rec)
+    return out
+}
+
+func list_all(state) {
+    print("LIST customers=" + str(count_kind(state, "CUSTOMER")) + " contacts=" + str(count_kind(state, "CONTACT")) + " activities=" + str(count_kind(state, "ACTIVITY")))
+    let i = 0
+    while (i < len(state)) {
+        let f = split(state[i], "|")
+        if (f[0] == "CUSTOMER") { print("CUSTOMER " + f[1] + " " + f[2]) }
+        i = i + 1
+    }
+    let j = 0
+    while (j < len(state)) {
+        let g = split(state[j], "|")
+        if (g[0] == "CONTACT") { print("CONTACT " + g[1] + " " + g[2]) }
+        if (g[0] == "ACTIVITY") { print("ACTIVITY " + g[1] + " " + g[2]) }
+        j = j + 1
+    }
+}
+
+func persist(path, state) {
+    let out = ""
+    let i = 0
+    while (i < len(state)) { out = out + state[i] + "\n"; i = i + 1 }
+    writeFile(path, out)
+}
+
+func main() {
+    let cmd_path = "data/commands.dat"
+    let state_path = "data/state.dat"
+    let report_path = "data/report.dat"
+    let txt = readFile(cmd_path)
+    let cmds = split(txt, "\n")
+    let state = split(readFile(state_path), "\n")
+    let report = ""
+    let i = 0
+    while (i < len(cmds)) {
+        let line = trim(cmds[i])
+        if (line != "") {
+            let f = split(line, "|")
+            let op = trim(f[0])
+            if (op == "CUSTOMER") {
+                let id = trim(f[1])
+                let name = trim(f[2])
+                state = upsert_customer(state, id, name)
+                report = report + "CUSTOMER " + id + " " + name + "\n"
+                print("CUSTOMER " + id + " " + name)
+            }
+            if (op == "CONTACT") {
+                let cid = trim(f[1])
+                let name = trim(f[2])
+                if (find_customer(state, cid) == "") {
+                    print("ERROR unknown customer " + cid)
+                    report = report + "ERROR unknown customer " + cid + "\n"
+                } else {
+                    state = add_linked(state, "CONTACT", cid, name)
+                    report = report + "CONTACT " + cid + " " + name + "\n"
+                    print("CONTACT " + cid + " " + name)
+                }
+            }
+            if (op == "ACTIVITY") {
+                let cid = trim(f[1])
+                let note = trim(f[2])
+                if (find_customer(state, cid) == "") {
+                    print("ERROR unknown customer " + cid)
+                    report = report + "ERROR unknown customer " + cid + "\n"
+                } else {
+                    state = add_linked(state, "ACTIVITY", cid, note)
+                    report = report + "ACTIVITY " + cid + " " + note + "\n"
+                    print("ACTIVITY " + cid + " " + note)
+                }
+            }
+            if (op == "LIST") {
+                list_all(state)
+                report = report + "LIST\n"
+            }
+        }
+        i = i + 1
+    }
+    persist(state_path, state)
+    persist(report_path, split(report, "\n"))
+    print("CRM_OK customers=" + str(count_kind(state, "CUSTOMER")) + " contacts=" + str(count_kind(state, "CONTACT")) + " activities=" + str(count_kind(state, "ACTIVITY")))
+}

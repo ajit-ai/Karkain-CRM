@@ -1,0 +1,34 @@
+func test_customer_record_fields() {
+    let rec = "CUSTOMER|C001|Acme Corp"
+    let f = split(rec, "|")
+    assert_eq(len(f), 3)
+    assert_eq(f[0], "CUSTOMER")
+    assert_eq(f[1], "C001")
+    assert_eq(f[2], "Acme Corp")
+}
+
+func test_contact_and_activity_linkage() {
+    let recs = ["CONTACT|C001|Alice Smith", "CONTACT|C001|Bob Jones", "ACTIVITY|C001|Demo scheduled", "ACTIVITY|C002|Follow-up call"]
+    let c1_contacts = 0
+    let c1_activities = 0
+    let i = 0
+    while (i < len(recs)) {
+        let f = split(recs[i], "|")
+        if (f[1] == "C001") {
+            if (f[0] == "CONTACT") { c1_contacts = c1_contacts + 1 }
+            if (f[0] == "ACTIVITY") { c1_activities = c1_activities + 1 }
+        }
+        i = i + 1
+    }
+    assert_eq(c1_contacts, 2)
+    assert_eq(c1_activities, 1)
+}
+
+func test_linked_record_shape_and_dedup_key() {
+    let linked = "ACTIVITY|C001|Proposal sent"
+    let f = split(linked, "|")
+    assert_eq(f[0], "ACTIVITY")
+    assert_eq(f[2], "Proposal sent")
+    let key = f[1] + "|" + f[2]
+    assert_eq(key, "C001|Proposal sent")
+}

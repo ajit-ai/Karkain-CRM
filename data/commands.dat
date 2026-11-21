@@ -1,0 +1,9 @@
+CUSTOMER|C001|Acme Corp
+CUSTOMER|C002|Globex Ltd
+CONTACT|C001|Alice Smith
+CONTACT|C001|Bob Jones
+CONTACT|C002|Carol Lee
+ACTIVITY|C001|Demo scheduled
+ACTIVITY|C001|Proposal sent
+ACTIVITY|C002|Follow-up call
+LIST
